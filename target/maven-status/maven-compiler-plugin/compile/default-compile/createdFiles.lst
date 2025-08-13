@@ -1,0 +1,5 @@
+com\autodad\autoreconnect\ServerManager.class
+com\autodad\autoreconnect\AutoReconnectPlugin.class
+com\autodad\autoreconnect\commands\ReconnectCommand.class
+com\autodad\autoreconnect\AutoReconnectManager.class
+com\autodad\autoreconnect\SimpleAutoReconnectPlugin.class

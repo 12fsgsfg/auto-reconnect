@@ -1,0 +1,16 @@
+# Velocity 配置示例 - Auto Reconnect Plugin
+# 將此配置添加到您的 velocity.toml 文件中
+
+[servers]
+# 定義兩個分流服務器
+lobby = "127.0.0.1:25565"
+wait = "127.0.0.1:25566"
+
+[forced-hosts]
+# 強制主機名映射
+"lobby.example.com" = ["lobby"]
+"wait.example.com" = ["wait"]
+
+# 插件配置（如果需要）
+[plugins]
+auto-reconnect = { enabled = true }
