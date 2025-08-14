@@ -1,1 +1,0 @@
-{"id":"auto-reconnect","name":"Auto Reconnect Plugin","version":"1.0.0","description":"Velocity plugin with lobby and wait servers, auto-reconnect for wait server","authors":["AutoDad"],"dependencies":[],"main":"com.autodad.autoreconnect.AutoReconnectPlugin"}
