@@ -1,0 +1,31 @@
+# Auto Reconnect Plugin 配置文件
+# 伺服器設定
+servers:
+  # 大廳伺服器名稱
+  lobby: "lobby"
+  # 等待伺服器名稱
+  wait: "wait"
+
+# 通知設定
+notifications:
+  # 是否啟用通知
+  enabled: true
+  # 通知前綴 (支援 Minecraft 顏色代碼)
+  prefix: "&6[AutoReconnect] &r"
+  # 重連嘗試訊息
+  reconnect_message: "正在嘗試重新連接到伺服器..."
+  # 成功重連訊息
+  success_message: "成功重新連接到伺服器！"
+  # 重連失敗訊息
+  failed_message: "無法連接到伺服器，請稍後再試。"
+  # 等待伺服器可用訊息
+  wait_message: "正在等待伺服器可用..."
+
+# 重連設定
+reconnect:
+  # 最大重連嘗試次數
+  max_attempts: 5
+  # 重連間隔時間 (秒)
+  delay_seconds: 3
+  # 檢查伺服器狀態間隔 (秒)
+  check_interval_seconds: 10

@@ -12,15 +12,13 @@ public class ServerManager {
     
     private final ProxyServer server;
     private final Logger logger;
+    private final ConfigManager configManager;
     private final ConcurrentMap<String, RegisteredServer> servers;
     
-    // 服務器名稱常量
-    public static final String LOBBY_SERVER = "lobby";
-    public static final String WAIT_SERVER = "wait";
-    
-    public ServerManager(ProxyServer server, Logger logger) {
+    public ServerManager(ProxyServer server, Logger logger, ConfigManager configManager) {
         this.server = server;
         this.logger = logger;
+        this.configManager = configManager;
         this.servers = new ConcurrentHashMap<>();
     }
     
@@ -28,8 +26,8 @@ public class ServerManager {
         logger.info("正在初始化服務器管理器...");
         
         // 註冊服務器
-        registerServer(LOBBY_SERVER);
-        registerServer(WAIT_SERVER);
+        registerServer(configManager.getLobbyServerName());
+        registerServer(configManager.getWaitServerName());
         
         logger.info("服務器管理器初始化完成");
     }
@@ -49,11 +47,11 @@ public class ServerManager {
     }
     
     public Optional<RegisteredServer> getLobbyServer() {
-        return getServer(LOBBY_SERVER);
+        return getServer(configManager.getLobbyServerName());
     }
     
     public Optional<RegisteredServer> getWaitServer() {
-        return getServer(WAIT_SERVER);
+        return getServer(configManager.getWaitServerName());
     }
     
     public boolean isServerOnline(String serverName) {
@@ -86,18 +84,19 @@ public class ServerManager {
     
     public boolean isLobbyOnline() {
         // 使用多種方法檢查lobby服務器狀態
-        boolean online = isServerOnline(LOBBY_SERVER);
+        String lobbyName = configManager.getLobbyServerName();
+        boolean online = isServerOnline(lobbyName);
         
         // 如果ping檢查失敗，嘗試其他方法
         if (!online) {
             // 檢查是否有玩家連接到lobby
-            online = hasPlayersOnServer(LOBBY_SERVER);
+            online = hasPlayersOnServer(lobbyName);
             if (online) {
                 logger.debug("Lobby服務器通過玩家連接檢測為在線");
             }
         }
         
-        logger.debug("Lobby服務器狀態檢查: {} (名稱: {})", online, LOBBY_SERVER);
+        logger.debug("Lobby服務器狀態檢查: {} (名稱: {})", online, lobbyName);
         return online;
     }
     
@@ -115,7 +114,7 @@ public class ServerManager {
     }
     
     public boolean isWaitOnline() {
-        return isServerOnline(WAIT_SERVER);
+        return isServerOnline(configManager.getWaitServerName());
     }
     
     public void refreshServer(String serverName) {
@@ -126,7 +125,7 @@ public class ServerManager {
     public void refreshAllServers() {
         logger.info("正在刷新所有服務器...");
         servers.clear();
-        registerServer(LOBBY_SERVER);
-        registerServer(WAIT_SERVER);
+        registerServer(configManager.getLobbyServerName());
+        registerServer(configManager.getWaitServerName());
     }
 }

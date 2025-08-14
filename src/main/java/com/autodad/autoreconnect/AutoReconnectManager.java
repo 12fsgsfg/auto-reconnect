@@ -21,20 +21,17 @@ public class AutoReconnectManager {
     private final ProxyServer server;
     private final Logger logger;
     private final ServerManager serverManager;
+    private final ConfigManager configManager;
     private final ScheduledExecutorService scheduler;
     private final AtomicBoolean running;
     
-    // 重連配置
-    private static final long CHECK_INTERVAL = 5; // 檢查間隔（秒）- 更頻繁
-    private static final long RECONNECT_DELAY = 2; // 重連延遲（秒）- 更快
-    private static final int MAX_RECONNECT_ATTEMPTS = 20; // 最大重連嘗試次數 - 更多
-    
     private int reconnectAttempts = 0;
     
-    public AutoReconnectManager(ProxyServer server, Logger logger, ServerManager serverManager) {
+    public AutoReconnectManager(ProxyServer server, Logger logger, ServerManager serverManager, ConfigManager configManager) {
         this.server = server;
         this.logger = logger;
         this.serverManager = serverManager;
+        this.configManager = configManager;
         this.scheduler = Executors.newScheduledThreadPool(1);
         this.running = new AtomicBoolean(false);
     }
@@ -44,14 +41,15 @@ public class AutoReconnectManager {
             logger.info("啟動自動重連管理器...");
             
             // 啟動定期檢查任務
+            long checkInterval = configManager.getCheckIntervalSeconds();
             scheduler.scheduleAtFixedRate(
                 this::checkAndReconnect,
-                CHECK_INTERVAL,
-                CHECK_INTERVAL,
+                checkInterval,
+                checkInterval,
                 TimeUnit.SECONDS
             );
             
-            logger.info("自動重連管理器已啟動，檢查間隔: {} 秒", CHECK_INTERVAL);
+            logger.info("自動重連管理器已啟動，檢查間隔: {} 秒", checkInterval);
         }
     }
     
@@ -81,12 +79,13 @@ public class AutoReconnectManager {
         try {
             // 持續重連模式：不檢查狀態，直接嘗試重連
             // 只在debug模式下顯示詳細信息
+            int maxAttempts = configManager.getMaxAttempts();
             if (logger.isDebugEnabled()) {
                 logger.debug("持續重連模式：嘗試重連Lobby服務器... (嘗試 {}/{})", 
-                    reconnectAttempts + 1, MAX_RECONNECT_ATTEMPTS);
+                    reconnectAttempts + 1, maxAttempts);
             }
             
-            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            if (reconnectAttempts < maxAttempts) {
                 reconnectAttempts++;
                 attemptReconnect();
             } else {
@@ -107,7 +106,7 @@ public class AutoReconnectManager {
                     logger.debug("正在嘗試重連Lobby服務器...");
                     
                     // 刷新服務器註冊
-                    serverManager.refreshServer(ServerManager.LOBBY_SERVER);
+                    serverManager.refreshServer(configManager.getLobbyServerName());
                     
                     // 等待一下讓服務器狀態更新
                     try {
@@ -122,7 +121,7 @@ public class AutoReconnectManager {
                     // 嘗試將wait分流的玩家轉移到lobby
                     attemptTransferPlayersFromWaitToLobby();
                 }
-            }, RECONNECT_DELAY, TimeUnit.SECONDS);
+            }, configManager.getDelaySeconds(), TimeUnit.SECONDS);
             
         } catch (Exception e) {
             logger.error("重連過程中發生錯誤", e);

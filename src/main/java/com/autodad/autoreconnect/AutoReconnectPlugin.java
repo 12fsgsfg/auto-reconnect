@@ -10,6 +10,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.autodad.autoreconnect.commands.ReconnectCommand;
+import com.autodad.autoreconnect.commands.ReloadConfigCommand;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -27,6 +28,7 @@ public class AutoReconnectPlugin {
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
+    private final ConfigManager configManager;
     private final ServerManager serverManager;
     private final AutoReconnectManager reconnectManager;
 
@@ -35,8 +37,9 @@ public class AutoReconnectPlugin {
         this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
-        this.serverManager = new ServerManager(server, logger);
-        this.reconnectManager = new AutoReconnectManager(server, logger, serverManager);
+        this.configManager = new ConfigManager(logger, dataDirectory);
+        this.serverManager = new ServerManager(server, logger, configManager);
+        this.reconnectManager = new AutoReconnectManager(server, logger, serverManager, configManager);
     }
 
     @Subscribe
@@ -72,6 +75,10 @@ public class AutoReconnectPlugin {
         ReconnectCommand reconnectCommand = new ReconnectCommand(server, reconnectManager, serverManager);
         commandManager.register("reconnect", reconnectCommand, "recon", "rc");
         
-        logger.info("已註冊命令: /reconnect, /recon, /rc");
+        // 註冊重載配置命令
+        ReloadConfigCommand reloadCommand = new ReloadConfigCommand(server, logger, configManager, serverManager);
+        commandManager.register("autoreload", reloadCommand, "ar", "reload");
+        
+        logger.info("已註冊命令: /reconnect, /recon, /rc, /autoreload, /ar, /reload");
     }
 }

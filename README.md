@@ -1,155 +1,116 @@
 # Auto Reconnect Plugin
 
-一個Velocity代理插件，提供兩個分流服務器（lobby和wait）的管理，並實現wait服務器的自動重連功能。
+一個 Velocity 代理插件，提供大廳和等待伺服器功能，以及自動重連機制。
 
 ## 功能特性
 
-- **雙分流系統**: 管理lobby和wait兩個服務器
-- **自動重連**: 當wait服務器離線時自動嘗試重連
-- **智能監控**: 定期檢查服務器狀態
-- **命令管理**: 提供完整的命令系統來管理插件
-- **可配置**: 支持自定義重連參數
-
-## 系統要求
-
-- Java 11 或更高版本
-- Velocity 3.3.0 或更高版本
-- Maven 3.6 或更高版本
+- 🏠 **大廳伺服器管理**: 自動管理大廳伺服器狀態
+- ⏳ **等待伺服器分流**: 當大廳伺服器不可用時，將玩家分流到等待伺服器
+- 🔄 **自動重連**: 持續監控並嘗試重連大廳伺服器
+- ⚙️ **可配置設定**: 支援自定義伺服器名稱、通知訊息和重連參數
+- 📝 **管理命令**: 提供重連和配置重載命令
 
 ## 安裝說明
 
-### 1. 編譯插件
+1. 下載最新的 JAR 文件
+2. 將 JAR 文件放入 Velocity 的 `plugins` 資料夾
+3. 重啟 Velocity 代理
+4. 插件會自動創建配置文件
 
-```bash
-mvn clean package
+## 配置文件
+
+插件會在 `plugins/auto-reconnect/` 資料夾中創建 `config.yml` 配置文件。
+
+### 配置選項
+
+#### 伺服器設定
+```yaml
+servers:
+  # 大廳伺服器名稱
+  lobby: "lobby"
+  # 等待伺服器名稱
+  wait: "wait"
 ```
 
-編譯完成後，JAR文件將位於 `target/` 目錄中。
-
-### 2. 安裝到Velocity
-
-1. 將編譯好的JAR文件複製到Velocity的 `plugins/` 目錄
-2. 重啟Velocity代理
-3. 確保在Velocity配置中已配置lobby和wait服務器
-
-### 3. Velocity配置示例
-
-在 `velocity.toml` 中添加服務器配置：
-
-```toml
-[servers]
-lobby = "127.0.0.1:25565"
-wait = "127.0.0.1:25566"
-
-[forced-hosts]
-"lobby.example.com" = ["lobby"]
-"wait.example.com" = ["wait"]
+#### 通知設定
+```yaml
+notifications:
+  # 是否啟用通知
+  enabled: true
+  # 通知前綴 (支援 Minecraft 顏色代碼)
+  prefix: "&6[AutoReconnect] &r"
+  # 重連嘗試訊息
+  reconnect_message: "正在嘗試重新連接到伺服器..."
+  # 成功重連訊息
+  success_message: "成功重新連接到伺服器！"
+  # 重連失敗訊息
+  failed_message: "無法連接到伺服器，請稍後再試。"
+  # 等待伺服器可用訊息
+  wait_message: "正在等待伺服器可用..."
 ```
 
-## 使用方法
+#### 重連設定
+```yaml
+reconnect:
+  # 最大重連嘗試次數
+  max_attempts: 5
+  # 重連間隔時間 (秒)
+  delay_seconds: 3
+  # 檢查伺服器狀態間隔 (秒)
+  check_interval_seconds: 10
+```
 
-### 命令列表
+## 命令
 
-- `/reconnect status` - 顯示自動重連狀態
-- `/reconnect reconnect force` - 強制重連Wait服務器
-- `/reconnect servers` - 顯示所有服務器狀態
-- `/reconnect help` - 顯示幫助信息
+### 玩家命令
+- `/reconnect` (別名: `/recon`, `/rc`) - 手動嘗試重連到大廳伺服器
 
-### 別名
+### 管理員命令
+- `/autoreload` (別名: `/ar`, `/reload`) - 重新載入配置文件
+  - 權限: `autoreconnect.reload`
 
-- `/recon` - `/reconnect` 的別名
-- `/rc` - `/reconnect` 的別名
+## 權限節點
 
-## 配置選項
-
-插件支持以下配置參數（可在代碼中修改）：
-
-- **檢查間隔**: 10秒（檢查服務器狀態的頻率）
-- **重連延遲**: 5秒（重連嘗試之間的延遲）
-- **最大重連嘗試次數**: 10次（達到後會重置計數器繼續嘗試）
+- `autoreconnect.reload` - 允許重載配置文件
 
 ## 工作原理
 
-1. **服務器監控**: 插件每10秒檢查一次wait服務器的狀態
-2. **自動檢測**: 當檢測到wait服務器離線時，自動啟動重連流程
-3. **智能重連**: 使用延遲重連機制，避免過於頻繁的重連嘗試
-4. **狀態恢復**: 當服務器恢復在線時，自動重置重連計數器
+1. **啟動時**: 插件會自動檢測並註冊大廳和等待伺服器
+2. **監控**: 定期檢查大廳伺服器狀態
+3. **分流**: 當大廳伺服器不可用時，新玩家會被分流到等待伺服器
+4. **重連**: 持續嘗試重連大廳伺服器
+5. **轉移**: 當大廳伺服器恢復時，自動將等待伺服器的玩家轉移過去
 
-## 日誌信息
+## 開發者資訊
 
-插件會記錄以下信息：
-
-- 啟動和關閉信息
-- 服務器狀態變化
-- 重連嘗試和結果
-- 錯誤和警告信息
+- **Java 版本**: 11+
+- **Velocity 版本**: 3.4.0-SNAPSHOT+
+- **依賴**: SnakeYAML 2.0
 
 ## 故障排除
 
 ### 常見問題
 
-1. **服務器無法連接**
-   - 檢查服務器地址和端口配置
-   - 確認服務器是否正在運行
-   - 檢查防火牆設置
+1. **插件無法啟動**
+   - 檢查 Velocity 版本是否支援
+   - 檢查 Java 版本是否為 11 或更高
 
-2. **重連失敗**
-   - 檢查網絡連接
-   - 確認服務器配置正確
-   - 查看日誌中的錯誤信息
+2. **配置文件錯誤**
+   - 刪除 `config.yml` 文件，讓插件重新生成
+   - 檢查 YAML 語法是否正確
 
-3. **插件無法啟動**
-   - 確認Java版本符合要求
-   - 檢查Velocity版本兼容性
-   - 查看啟動日誌
+3. **伺服器無法連接**
+   - 確認伺服器名稱在 Velocity 配置中正確設定
+   - 檢查伺服器是否正在運行
 
-## 開發信息
+### 日誌
 
-### 項目結構
+插件會記錄詳細的日誌信息到 Velocity 的日誌文件中。啟用 debug 模式可以獲得更多信息。
 
-```
-src/main/java/com/autodad/autoreconnect/
-├── AutoReconnectPlugin.java      # 主插件類
-├── ServerManager.java            # 服務器管理器
-├── AutoReconnectManager.java     # 自動重連管理器
-└── commands/
-    └── ReconnectCommand.java     # 命令處理器
-```
+## 支援
 
-### 構建
+如果您遇到問題或有建議，請在 GitHub 上創建 issue。
 
-```bash
-# 清理並編譯
-mvn clean compile
+## 授權
 
-# 運行測試
-mvn test
-
-# 打包
-mvn package
-
-# 安裝到本地倉庫
-mvn install
-```
-
-## 許可證
-
-此項目採用MIT許可證。
-
-## 支持
-
-如果您遇到問題或有建議，請：
-
-1. 檢查日誌文件
-2. 查看此README文件
-3. 檢查Velocity官方文檔
-4. 提交Issue或Pull Request
-
-## 更新日誌
-
-### v1.0.0
-- 初始版本
-- 支持lobby和wait雙分流
-- 實現wait服務器自動重連
-- 提供完整的命令系統
-- 支持服務器狀態監控
+本項目採用 MIT 授權條款。
